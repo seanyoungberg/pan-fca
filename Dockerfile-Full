@@ -32,7 +32,7 @@ RUN apt-get update -y && \
         cryptography==2.4.2 \
         jsonschema && \
     go get golang.org/x/crypto/ssh && \
-    ansible-galaxy install PaloAltoNetworks.paloaltonetworks && \
+    ansible-galaxy install PaloAltoNetworks.paloaltonetworks -p /fca/roles && \
     curl https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip > terraform.zip && \
     unzip terraform.zip -d /bin && \
     rm -f terraform.zip && \
@@ -43,5 +43,20 @@ RUN apt-get update -y && \
     rm -rf /root/.pip/cache && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /var/cache/apt
+
+# Create the home directory for the new app user.
+RUN mkdir -p /home/fca-user
+
+# Create an app user so our program doesn't run as root.
+RUN groupadd -r fca-user && useradd -r -g fca-user -d /home/fca-user fca-user
+
+# Set the home directory to our app user's home.
+ENV HOME=/home/fca-user
+
+# Chown all the files to the app user.
+RUN chown -R fca-user:fca-user $HOME
+
+# Change to the app user.
+USER fca-user
 
 ENTRYPOINT ["/bin/bash"]
